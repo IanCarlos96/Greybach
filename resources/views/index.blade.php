@@ -30,8 +30,12 @@
             <form method = 'POST' action = "{{route('processaArquivo')}}" enctype="multipart/form-data">
                 @csrf
                 <input id = "file" name = "file" type = "file">
-                <button type = "submit">'Enviar arquivo' </button>
+                <button type = "submit">Enviar arquivo </button>
             </form>    
+        </div>
+        <div> 
+            <a href ="https://github.com/IanCarlos96/Greybach" >Link do repo completo.</a><br>
+            <a href ="https://github.com/IanCarlos96/Greybach/blob/master/app/Http/Controllers/gramaticaController.php"> Link do Controller</a>
         </div>
         
     </body>
