@@ -88,7 +88,7 @@ class gramaticaController extends Controller
         $variaveis = array_values(array_unique($variaveis));
         $regras = array_merge($regrasIni, $regrasExtras);
         
-        $glc = [
+        $glc['glc'] = [
             $variaveis,
             $simbolos,
             $regras,
