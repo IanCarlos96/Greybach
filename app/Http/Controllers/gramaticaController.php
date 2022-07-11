@@ -45,9 +45,22 @@ class gramaticaController extends Controller
             }
 
 
-            $indexesVariaveis = $this->geraIndexVariaveis($variaveis, $start);
             $variaveisList = $this->atualizaVariaveisLivres($variaveis, $variaveisList);
             
+            //Passo 0:
+            //Procura regras com símbolos no segundo caractere e adiante.
+            $resultPasso0 = $this->forcaRegrasFormaNormal($regras, $simbolos, $variaveis, $variaveisList);
+            $variaveis = $resultPasso0['variaveis'];
+            $regras = $resultPasso0['regras'];
+            $variaveisList = $resultPasso0['variaveisList'];
+            
+
+            $indexesVariaveis = $this->geraIndexVariaveis($variaveis, $start);
+            $variaveisList = $this->atualizaVariaveisLivres($variaveis, $variaveisList);
+
+            $regras = $this->organizaRegras($regras, $indexesVariaveis);
+            $regrasIni = $regras;
+
             //Passo 1:
             //Recursividade à resquerda
             $regrasProcessadas = $this->procuraRecursividadeEsquerda($regras, $simbolos, $variaveisList);
@@ -64,14 +77,13 @@ class gramaticaController extends Controller
             $regrasExtras = $this->removeRegrasDuplicadas($resultPasso2['novasRegras']);
             $regrasIni = $this->organizaRegras($regrasIni, $indexesVariaveis);
             $variaveisList = $resultPasso2['variaveisList'];
-
+            
             //Passo 3:
             $regrasPasso3 = $this->atualizaRegrasDownToUp($regrasIni, $indexesVariaveis, $simbolos);
-            
+
+
             //Passo 4:
             $regrasExtras = $this->atualizaRegrasExtras($regrasExtras, $regrasPasso3, $simbolos);
-            
-            //dd($variaveisList);
             
             return $this->preparaSaida($variaveis, $simbolos, $regrasPasso3, $regrasExtras, $start);
 
@@ -79,6 +91,35 @@ class gramaticaController extends Controller
             echo 'Erro em: '.$e;
         }
 
+    }
+
+    public function forcaRegrasFormaNormal($regras, $simbolos, $variaveis, $variaveisList){
+        //Procura regra do tipo A -> BcD.
+        //Se encontrar, cria variavel E -> cD, e faz A -> BE
+        foreach($regras as $count => $regra){
+            //$chars = str_split($regra[1]);
+            foreach(str_split($regra[1]) as $pos => $letra){
+                if($pos > 0 && in_array($letra, $simbolos)){
+                    //Cria nova Variável
+                    $novaVariavel = $this->criaVariavel($variaveisList);
+                    $variaveisList = $novaVariavel['variaveisList'];
+                    
+                    //Atualiza as regras
+                    $novaRegra = [$novaVariavel['newVar'], substr($regra[1], $pos)];
+                    $regraAntiga = [$regra[0], substr($regra[1], 0, $pos).$novaVariavel['newVar']];
+                    array_push($regras, $novaRegra);
+                    array_push($regras, $regraAntiga);
+                    unset($regras[$count]);
+                    //Adicionar a variável na lista de variáveis oficiais
+                    $variaveis[] = $novaVariavel['newVar'];
+                }
+            }
+        }
+        return [
+            'regras' => $regras,
+            'variaveis' => $variaveis,
+            'variaveisList' => $variaveisList
+        ];
     }
 
     public function preparaSaida($variaveis, $simbolos, $regrasIni, $regrasExtras, $start){
